@@ -1,0 +1,121 @@
+
+ // Pinos da Ponte H L298N
+const int IN1 = 7;
+const int IN2 = 8;
+const int IN3 = 10;
+const int IN4 = 9;
+
+// Pinos PWM dos motores
+const int ENA = 6;
+const int ENB = 11;
+
+// Sensores infravermelhos
+const int sensorIR1 = A0;
+const int sensorIR2 = A1;
+
+// Velocidades dos motores
+const int velocidadeA = 150;
+const int velocidadeB = 135;
+const int velocidadeCorrecao = 145;
+
+// Limite para detectar a linha
+const int limiteIR = 700;
+
+void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Leitura analógica dos sensores
+  int ir1 = analogRead(sensorIR1);
+  int ir2 = analogRead(sensorIR2);
+
+  // Exibe as leituras no Monitor Serial
+  Serial.print("A0: ");
+  Serial.print(ir1);
+
+  Serial.print(" | A1: ");
+  Serial.println(ir2);
+
+  // Verifica se cada sensor detecta a linha
+  bool linhaEsquerda = ir1 > limiteIR;
+  bool linhaDireita = ir2 > limiteIR;
+
+  // Nenhum sensor detecta a linha:
+  // segue em frente normalmente
+  if (!linhaEsquerda && !linhaDireita) {
+    andarFrente();
+  }
+
+  // Apenas o sensor esquerdo detecta a linha
+  else if (linhaEsquerda && !linhaDireita) {
+    corrigirEsquerda();
+  }
+
+  // Apenas o sensor direito detecta a linha
+  else if (!linhaEsquerda && linhaDireita) {
+    corrigirDireita();
+  }
+
+  // Ambos detectam a linha
+  else {
+    parar();
+  }
+
+  delay(30);
+}
+
+// Movimento para frente
+void andarFrente() {
+  analogWrite(ENA, velocidadeA);
+  analogWrite(ENB, velocidadeB);
+
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+// Correção para a esquerda
+void corrigirEsquerda() {
+  analogWrite(ENA, velocidadeCorrecao);
+  analogWrite(ENB, velocidadeCorrecao);
+
+  // Motor A parado
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
+  // Motor B em movimento
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+// Correção para a direita
+void corrigirDireita() {
+  analogWrite(ENA, velocidadeCorrecao);
+  analogWrite(ENB, velocidadeCorrecao);
+
+  // Motor A em movimento
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  // Motor B parado
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+// Para os motores
+void parar() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
